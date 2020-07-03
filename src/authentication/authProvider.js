@@ -1,6 +1,7 @@
 import auth from 'solid-auth-client';
 
 export const authProvider = {
+    // Not needed with popup based login
     login(params) {
         return auth.login(params.idp);
     },
