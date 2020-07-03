@@ -13,8 +13,9 @@ import {
 import { useLDflexValue, useLDflexList } from '@solid/react';
 import { ValueFromLDflexObject } from './solid/ValueFromLDflexObject';
 
+
 export function Dashboard() {
-    const user = useLDflexValue('user.name');
+    const userName = useLDflexValue('user.name');
     const photo = useLDflexValue('user.vcard_hasPhoto');
     const email = useLDflexValue('user.vcard_hasEmail');
     const trustedApps = useLDflexList('user.acl_trustedApp');
@@ -24,7 +25,7 @@ export function Dashboard() {
             <Card>
                 <CardHeader
                     avatar={<Avatar src={photo ? photo.toString() : ''} />}
-                    title={user ? user.toString() : ''}
+                    title={`${userName}`}
                     subheader={email ? email.toString() : ''}
                 />
                 <Divider />
