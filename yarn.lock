@@ -2639,7 +2639,7 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
-"@types/http-link-header@^1.0.1":
+"@types/http-link-header@^1.0.0", "@types/http-link-header@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/http-link-header/-/http-link-header-1.0.1.tgz#411493fe06da4b9472fa4eeecc990ea92be8cc2a"
   integrity sha512-5h+Pqs4EHoMkY/fLva7XsYmh9IVQghQ6uWWil1FGCNI0WqjhI4g20doYsbT4kJ/G3GkAlQca4AIc9OexdUnzkg==
@@ -2696,6 +2696,14 @@
   dependencies:
     "@types/node" "*"
 
+"@types/n3@^1.1.1":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@types/n3/-/n3-1.4.0.tgz#e0719c03957d32a39b1efefb33ac1d55519ace1b"
+  integrity sha512-lVesnHn2/3wv6EqdR42JGel9pZ4PcRS31M0osht7cGEUVVzBVNBlyFq/8Z3e8EdAFGZrYVYyDnaBRX0bZsFUvA==
+  dependencies:
+    "@types/node" "*"
+    "@types/rdf-js" "*"
+
 "@types/node@*":
   version "13.9.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.9.2.tgz#ace1880c03594cc3e80206d96847157d8e7fa349"
@@ -2731,17 +2739,17 @@
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
   integrity sha512-ce5d3q03Ex0sy4R14722Rmt6MT07Ua+k4FwDfdcToYJcMKNtRVQvJ6JCAPdAmAnbRb6CsX6aYb9m96NGod9uTw==
 
+"@types/rdf-js@*", "@types/rdf-js@^3.0.0", "@types/rdf-js@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@types/rdf-js/-/rdf-js-3.0.2.tgz#b7ffe19073f39ffef3894baad84e6c8a7a0ed3e7"
+  integrity sha512-MWZrO1DXlxmeDGsjQPsgkceAJdxYb+d4WSjZZivusYzuXqvgdXqUwO6zPJYu6KsQ/Tkh3yNSUdOHqQ86xQH2Og==
+  dependencies:
+    "@types/node" "*"
+
 "@types/rdf-js@^2.0.1", "@types/rdf-js@^2.0.11", "@types/rdf-js@^2.0.2", "@types/rdf-js@^2.0.4":
   version "2.0.12"
   resolved "https://registry.yarnpkg.com/@types/rdf-js/-/rdf-js-2.0.12.tgz#d305a0b6fd105e33f58d5c1b3de33ff8edcb3210"
   integrity sha512-NBzHFHp2vHOJkPlSqzsOrkEsD9grKn+PdFjZieIw59pc0FlRG6WEQAjQZvHzFxJlYzC6ZDCFyTA1wBvUnnzUQw==
-  dependencies:
-    "@types/node" "*"
-
-"@types/rdf-js@^3.0.0", "@types/rdf-js@^3.0.2":
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@types/rdf-js/-/rdf-js-3.0.2.tgz#b7ffe19073f39ffef3894baad84e6c8a7a0ed3e7"
-  integrity sha512-MWZrO1DXlxmeDGsjQPsgkceAJdxYb+d4WSjZZivusYzuXqvgdXqUwO6zPJYu6KsQ/Tkh3yNSUdOHqQ86xQH2Og==
   dependencies:
     "@types/node" "*"
 
@@ -2766,6 +2774,11 @@
   dependencies:
     "@types/prop-types" "*"
     csstype "^2.2.0"
+
+"@types/solid-auth-client@^2.3.1":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@types/solid-auth-client/-/solid-auth-client-2.4.0.tgz#0bd55ee813146b90053bf50c2c5691867e5bed60"
+  integrity sha512-RsJ33lAZXiZn/p6dIcU9NNge5yCTPYE5lna51olYDqAR1QsLNXGTfWCi/k0TiwjorFrXA2+Qm6XQ8RQnP+RRkQ==
 
 "@types/sparqljs@^3.0.0":
   version "3.0.0"
@@ -8712,7 +8725,7 @@ n3@^0.9.1:
   resolved "https://registry.yarnpkg.com/n3/-/n3-0.9.1.tgz#430b547d58dc7381408c45784dd8058171903932"
   integrity sha1-QwtUfVjcc4FAjEV4TdgFgXGQOTI=
 
-n3@^1.0.0, n3@^1.0.4, n3@^1.1.1:
+n3@^1.0.0, n3@^1.0.4, n3@^1.1.1, n3@^1.2.1:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/n3/-/n3-1.4.0.tgz#0804f437bf3742c1e78bb822cf66d6e20510b8a4"
   integrity sha512-aEo8Jc+ZM9GoBtt7/OW+7aczMh4wLdt1IUcT8JCgv/b+ko5PCvkR0793rzWdu7+wJmA93sNb/3yM+01i9pz6fA==
@@ -10542,6 +10555,11 @@ rdf-literal@^1.0.0:
   dependencies:
     "@rdfjs/data-model" "^1.1.1"
     "@types/rdf-js" "^3.0.0"
+
+rdf-namespaces@^1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/rdf-namespaces/-/rdf-namespaces-1.8.0.tgz#f2e09abfb0d1972305719b2081fcb131c20aab5a"
+  integrity sha512-xwAYESS5iqRNbsroUP4LXnl37ATCYWQpWah1BJkflj+DEwZ2Tf7+gJG13AFa6dJAM1dy9CN5i9i9G0vLewwYkQ==
 
 rdf-quad@^1.4.0:
   version "1.4.0"
@@ -12412,6 +12430,17 @@ tr46@^1.0.1:
   integrity sha1-qLE/1r/SSJUZZ0zN5VujaTtwbQk=
   dependencies:
     punycode "^2.1.0"
+
+tripledoc@^4.3.4:
+  version "4.3.4"
+  resolved "https://registry.yarnpkg.com/tripledoc/-/tripledoc-4.3.4.tgz#5177e299d42c43a5c3f9a0ee26355e013b3c9463"
+  integrity sha512-B4BXBlEcN9CAd0M5S4T3GxGksZaq2cNQokjUhC7vIlhUHjRrdPS/ROxbVyoqw/yWc4PD+3Tl+N2fKJvJga000A==
+  dependencies:
+    "@types/http-link-header" "^1.0.0"
+    "@types/n3" "^1.1.1"
+    "@types/solid-auth-client" "^2.3.1"
+    http-link-header "^1.0.2"
+    n3 "^1.2.1"
 
 ts-essentials@^6.0.5:
   version "6.0.7"

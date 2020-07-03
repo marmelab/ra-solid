@@ -4,15 +4,18 @@ import { dataProvider } from './dataProvider';
 import { authProvider, LoginPage } from './authentication';
 import { Dashboard } from './Dashboard';
 import { Layout } from "./Layout";
+import { products } from './products';
 
-export const App = () => (
-  <Admin
-    authProvider={authProvider}
-    dashboard={Dashboard}
-    dataProvider={dataProvider}
-    layout={Layout}
-    loginPage={LoginPage}
-  >
-    <Resource name="test" />
-  </Admin>
-);
+export function App() {
+  return (
+    <Admin
+      authProvider={authProvider}
+      dashboard={Dashboard}
+      dataProvider={dataProvider}
+      layout={Layout}
+      loginPage={LoginPage}
+    >
+      <Resource name="products" {...products} />
+    </Admin>
+  );
+};

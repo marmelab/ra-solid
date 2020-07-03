@@ -8,10 +8,12 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "data-generator-retail": "^3.5.5",
+    "rdf-namespaces": "^1.8.0",
     "react": "^16.13.1",
     "react-admin": "^3.6.2",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "tripledoc": "^4.3.4"
   },
   "scripts": {
     "start": "react-scripts start",
