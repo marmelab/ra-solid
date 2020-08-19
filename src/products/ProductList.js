@@ -13,7 +13,7 @@ export function ProductList(props) {
     return (
         <List {...props} filters={<ProductFilter />}>
             <Datagrid>
-                <TextField source="id" />
+                <TextField source="identifier" label="Id" />
                 <TextField source="name" />
                 <NumberField source="width" />
                 <NumberField source="height" />
