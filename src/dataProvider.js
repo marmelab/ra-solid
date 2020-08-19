@@ -1,3 +1,4 @@
+/* global Comunica */
 import auth from 'solid-auth-client';
 import { createDocument, fetchDocument } from 'tripledoc';
 import { rdf, schema, solid, space } from 'rdf-namespaces';
@@ -36,26 +37,61 @@ const resourceDefinitions = {
 
 export const dataProvider = {
     async getList(resource, params) {
+        const engine = Comunica.newEngine();
         const session = await auth.currentSession();
+        const definition = resourceDefinitions[resource];
 
-        if (!session || !session.webId) {
-            const error = new Error();
-            error.status = 401;
-            throw error;
-        }
-
-        const resourceDocument = await getResourceList(
+        const resourceRef = await getResourceListRef(
             session.webId,
             resource,
-            resourceDefinitions[resource].schema
+            definition.schema
         );
-        const records = resourceDocument.getSubjectsOfType(
-            resourceDefinitions[resource].schema
-        );
+
+        const config = {
+            sources: [resourceRef],
+        };
+
+        const countQuery = `
+            SELECT (COUNT(?id) as ?count)
+            WHERE {
+                ?s <${schema.identifier}> ?id
+            }
+        `;
+
+        const countResponse = await engine.query(countQuery, config);
+        const countBindings = await countResponse.bindings();
+        const total = parseInt(countBindings[0].toJS()['?count'].value);
+
+        const limit = params.pagination.perPage;
+        const offset = (params.pagination.page - 1) * limit;
+        const order = `${params.sort.order.toUpperCase()}(?${params.sort.field})`;
+
+        const query = `
+            SELECT ${Object
+                    .keys(definition.fields)
+                    .map(field => `?${field}`)
+                    .join(' ')
+                }
+            WHERE {
+                ${Object
+                    .keys(definition.fields)
+                    .map(field => `?s <${definition.fields[field].schema}> ?${field} .`)
+                    .join('\n')
+                }
+            }
+            ORDER BY ${order}
+            LIMIT ${limit}
+            OFFSET ${offset}
+        `;
+
+        const response = await engine.query(query, config);
         
+        const bindings = await response.bindings();
+        const data = bindings.map(resolveRecord(resource));
+
         return Promise.resolve({
-            data: records.map(resolveResource(resource)),
-            total: records.length,
+            data,
+            total,
         });
     },
     async create(resource, params) {
@@ -97,28 +133,16 @@ export const dataProvider = {
     }
 };
 
-function resolveResource(resource) {
-    const resourceDefinition = resourceDefinitions[resource];
-    return record => {
-        return Object.keys(resourceDefinition.fields).reduce((acc, field) => {
-            const fieldDefinition = resourceDefinition.fields[field];
-            switch(fieldDefinition.type) {
-                case String:
-                    acc[field] = record.getString(fieldDefinition.schema);
-                    break;
-                case Number:
-                    acc[field] = record.getNumber(fieldDefinition.schema);
-                    break;
-                default:
-                    console.log('Unknown type');
-                    break;
-            }
-            return acc;
-        }, {});
-    }
+const resolveRecord = resource => record => {
+    const definition = resourceDefinitions[resource];
+    const data = record.toJS();
+    return Object.keys(definition.fields).reduce((acc, field) => ({
+        ...acc,
+        [field]: data[`?${field}`].value,
+    }), {});
 }
 
-export async function getResourceList(webId, resource, typeRef) {
+export async function getResourceListRef(webId, resource, typeRef) {
     // 1. Check if a Document tracking this resource already exists.
     const webIdDoc = await fetchDocument(webId);
     const profile = webIdDoc.getSubject(webId);
@@ -133,6 +157,12 @@ export async function getResourceList(webId, resource, typeRef) {
     
     // 3. If it does exist, fetch that Document
     const resourceListRef = resourceListEntry.getRef(solid.instance);
+
+    return resourceListRef;
+}
+
+export async function getResourceList(webId, resource, typeRef) {
+    const resourceListRef = await getResourceListRef(webId, resource, typeRef);
     return fetchDocument(resourceListRef);
 }
 
