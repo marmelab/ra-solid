@@ -2,6 +2,7 @@
 import auth from 'solid-auth-client';
 import { createDocument, fetchDocument } from 'tripledoc';
 import { rdf, schema, solid, space } from 'rdf-namespaces';
+import * as uuid from 'uuid';
 
 const resourceDefinitions = {
     products: {
@@ -9,28 +10,21 @@ const resourceDefinitions = {
         fields: {
             id: {
                 schema: schema.identifier,
-                type: String,
+                type: 'xsd:string',
             },
             name: {
                 schema: schema.name,
-                type: String,
+                type: 'xsd:string',
+                fullTextSearch: true,
             },
-            // reference: {
-            //     schema: schema.productID,
-            //     type: String,
-            // },
-            // width: {
-            //     schema: schema.width,
-            //     type: Number,
-            // },
-            // height: {
-            //     schema: schema.height,
-            //     type: Number,
-            // },
-            // description: {
-            //     schema: schema.description,
-            //     type: String,
-            // }
+            width: {
+                schema: schema.width,
+                type: 'xsd:integer',
+            },
+            height: {
+                schema: schema.height,
+                type: 'xsd:integer',
+            },
         }
     },
 }
@@ -54,7 +48,12 @@ export const dataProvider = {
         const countQuery = `
             SELECT (COUNT(?id) as ?count)
             WHERE {
-                ?s <${schema.identifier}> ?id
+                ?s <${schema.identifier}> ?id .
+                ${Object
+                    .keys(definition.fields)
+                    .map(buildFilter(resource, params.filter))
+                    .join('\n')
+                }
             }
         `;
 
@@ -75,7 +74,7 @@ export const dataProvider = {
             WHERE {
                 ${Object
                     .keys(definition.fields)
-                    .map(field => `?s <${definition.fields[field].schema}> ?${field} .`)
+                    .map(buildFilter(resource, params.filter))
                     .join('\n')
                 }
             }
@@ -109,36 +108,47 @@ export const dataProvider = {
             resource,
             resourceDefinition.schema
         );
+        const data = {
+            id: uuid.v4(),
+            ...params.data,
+        }
 
         const record = resourceDocument.addSubject();        
         record.addRef(rdf.type, resourceDefinition.schema);
         
         Object.keys(resourceDefinition.fields).forEach(property => {
             const fieldDefinition = resourceDefinition.fields[property];
-            switch (fieldDefinition.type) {
-                case String:
-                    record.addString(fieldDefinition.schema, params.data[property]);
-                    break;
-                case Number:
-                    record.addNumber(fieldDefinition.schema, params.data[property]);
-                    break;
-                default:
-                    console.log('Unknown type');
-                    break;
-            }
+            record.addLiteral(fieldDefinition.schema, data[property]);
         });
 
         await resourceDocument.save([record]);
-        return { data: record };
+        return { data };
     }
 };
+
+const buildFilter = (resource, filter) => field => {
+    const resourceDefinition = resourceDefinitions[resource];
+    const definition = resourceDefinition.fields[field];
+
+    const whereClause = `OPTIONAL { ?s <${definition.schema}> ?${field} } .`;
+
+    if (filter.q && definition.fullTextSearch) {
+        return `${whereClause} FILTER regex(?${field}, "${filter.q}", "i")`;
+    }
+    
+    if (filter[field]) {
+        return `${whereClause} FILTER (?${field} = "${filter[field]}"^^${definition.type})`;
+    }
+
+    return whereClause;
+}
 
 const resolveRecord = resource => record => {
     const definition = resourceDefinitions[resource];
     const data = record.toJS();
     return Object.keys(definition.fields).reduce((acc, field) => ({
         ...acc,
-        [field]: data[`?${field}`].value,
+        [field]: data[`?${field}`]?.value,
     }), {});
 }
 
