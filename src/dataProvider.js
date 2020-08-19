@@ -8,9 +8,10 @@ const resourceDefinitions = {
     products: {
         schema: schema.Product,
         fields: {
-            id: {
+            identifier: {
                 schema: schema.identifier,
                 type: 'xsd:string',
+                documentName: 'id',
             },
             name: {
                 schema: schema.name,
@@ -29,9 +30,10 @@ const resourceDefinitions = {
     },
 }
 
+const engine = Comunica.newEngine();
+
 export const dataProvider = {
     async getList(resource, params) {
-        const engine = Comunica.newEngine();
         const session = await auth.currentSession();
         const definition = resourceDefinitions[resource];
 
@@ -43,6 +45,7 @@ export const dataProvider = {
 
         const config = {
             sources: [resourceRef],
+            httpIncludeCredentials: true,
         };
 
         const countQuery = `
@@ -61,16 +64,19 @@ export const dataProvider = {
         const countBindings = await countResponse.bindings();
         const total = parseInt(countBindings[0].toJS()['?count'].value);
 
+        if (total === 0) {
+            return {
+                data: [],
+                total,
+            };
+        }
+
         const limit = params.pagination.perPage;
         const offset = (params.pagination.page - 1) * limit;
         const order = `${params.sort.order.toUpperCase()}(?${params.sort.field})`;
 
         const query = `
-            SELECT ${Object
-                    .keys(definition.fields)
-                    .map(field => `?${field}`)
-                    .join(' ')
-                }
+            SELECT *
             WHERE {
                 ${Object
                     .keys(definition.fields)
@@ -109,7 +115,7 @@ export const dataProvider = {
             resourceDefinition.schema
         );
         const data = {
-            id: uuid.v4(),
+            identifier: uuid.v4(),
             ...params.data,
         }
 
@@ -122,7 +128,59 @@ export const dataProvider = {
         });
 
         await resourceDocument.save([record]);
-        return { data };
+        engine.invalidateHttpCache(resourceDocument.asRef());
+
+        return { data: {
+            id: record.asRef(),
+            ...data,
+        } };
+    },
+    async deleteMany(resource, params) {
+        const session = await auth.currentSession();
+
+        if (!session || !session.webId) {
+            const error = new Error();
+            error.status = 401;
+            throw error;
+        }
+
+        const resourceDefinition = resourceDefinitions[resource];
+        const resourceDocument = await getResourceList(
+            session.webId,
+            resource,
+            resourceDefinition.schema
+        );
+        
+        params.ids.forEach((id) => {
+            resourceDocument.removeSubject(id);
+        });
+
+        await resourceDocument.save();
+        engine.invalidateHttpCache(resourceDocument.asRef());
+
+        return { data: params.ids };
+    },
+    async delete(resource, params) {
+        const session = await auth.currentSession();
+
+        if (!session || !session.webId) {
+            const error = new Error();
+            error.status = 401;
+            throw error;
+        }
+
+        const resourceDefinition = resourceDefinitions[resource];
+        const resourceDocument = await getResourceList(
+            session.webId,
+            resource,
+            resourceDefinition.schema
+        );
+
+        resourceDocument.removeSubject(params.id);
+        await resourceDocument.save();
+        engine.invalidateHttpCache(resourceDocument.asRef());
+
+        return { data: params.previousData };
     }
 };
 
@@ -130,14 +188,17 @@ const buildFilter = (resource, filter) => field => {
     const resourceDefinition = resourceDefinitions[resource];
     const definition = resourceDefinition.fields[field];
 
-    const whereClause = `OPTIONAL { ?s <${definition.schema}> ?${field} } .`;
+    const name = definition.documentName || field;
+
+    // ?s typeRDF ?name
+    const whereClause = `OPTIONAL { ?s <${definition.schema}> ?${name} } .`;
 
     if (filter.q && definition.fullTextSearch) {
-        return `${whereClause} FILTER regex(?${field}, "${filter.q}", "i")`;
+        return `${whereClause} FILTER regex(?${name}, "${filter.q}", "i")`;
     }
     
     if (filter[field]) {
-        return `${whereClause} FILTER (?${field} = "${filter[field]}"^^${definition.type})`;
+        return `${whereClause} FILTER (?${name} = "${filter[field]}"^^${definition.type})`;
     }
 
     return whereClause;
@@ -148,8 +209,10 @@ const resolveRecord = resource => record => {
     const data = record.toJS();
     return Object.keys(definition.fields).reduce((acc, field) => ({
         ...acc,
-        [field]: data[`?${field}`]?.value,
-    }), {});
+        [field]: data[`?${definition.fields[field].documentName || field}`]?.value,
+    }), {
+        id: data['?s'].value
+    });
 }
 
 export async function getResourceListRef(webId, resource, typeRef) {
