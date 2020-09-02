@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { Create, SimpleForm, TextInput, NumberInput } from 'react-admin';
+import { Edit, SimpleForm, TextInput, NumberInput } from 'react-admin';
 
-export function ProductCreate(props) {
+export function ProductEdit(props) {
     return (
-        <Create {...props}>
+        <Edit {...props}>
             <SimpleForm>
+                <TextInput readOnly source="identifier" />
                 <TextInput source="name" />
                 <NumberInput source="width" />
                 <NumberInput source="height" />
             </SimpleForm>
-        </Create>
+        </Edit>
     )
 }
