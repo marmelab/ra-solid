@@ -211,7 +211,77 @@ export const dataProvider = {
         engine.invalidateHttpCache(resourceDocument.asRef());
 
         return { data: params.previousData };
-    }
+    },
+    async getOne(resource, params) {
+        const session = await auth.currentSession();
+
+        if (!session || !session.webId) {
+            const error = new Error();
+            error.status = 401;
+            throw error;
+        }
+
+        const resourceDefinition = resourceDefinitions[resource];
+        const resourceDocument = await getResourceList(
+            session.webId,
+            resource,
+            resourceDefinition.schema
+        );
+
+        const record = resourceDocument.getSubject(params.id);
+        const data = resolveRecordFromTripleDoc(resource)(record);
+        return { data };
+    },
+    async update(resource, params) {
+        const session = await auth.currentSession();
+
+        if (!session || !session.webId) {
+            const error = new Error();
+            error.status = 401;
+            throw error;
+        }
+
+        const resourceDefinition = resourceDefinitions[resource];
+        const resourceDocument = await getResourceList(
+            session.webId,
+            resource,
+            resourceDefinition.schema
+        );
+
+        const subject = resourceDocument.getSubject(params.id);
+        updateTripleDocFromRecord(resource)(subject, params.data);
+        await resourceDocument.save();
+        // Ensure the Comunica engine will refetch the data
+        engine.invalidateHttpCache(resourceDocument.asRef());
+
+        return { data: params.data };
+    },
+    async updateMany(resource, params) {
+        const session = await auth.currentSession();
+
+        if (!session || !session.webId) {
+            const error = new Error();
+            error.status = 401;
+            throw error;
+        }
+
+        const resourceDefinition = resourceDefinitions[resource];
+        const resourceDocument = await getResourceList(
+            session.webId,
+            resource,
+            resourceDefinition.schema
+        );
+
+        params.ids.forEach(id => {
+            const subject = resourceDocument.getSubject(id);
+            updateTripleDocFromRecord(resource)(subject, params.data);
+        });
+        await resourceDocument.save();
+        // Ensure the Comunica engine will refetch the data
+        engine.invalidateHttpCache(resourceDocument.asRef());
+
+        return { data: params.data };
+    },
 };
 
 const buildFilter = (resource, filter) => field => {
@@ -258,6 +328,45 @@ const resolveRecord = resource => record => {
     }), {
         // Ensure we have an id which is the record IRI
         id: data['?iri'].value
+    });
+};
+
+const resolveRecordFromTripleDoc = resource => record => {
+    const definition = resourceDefinitions[resource];
+
+    return Object.keys(definition.fields).reduce((acc, field) => {
+            const fieldDefinition = definition.fields[field];
+            switch(fieldDefinition.type) {
+                case 'xsd:string':
+                    acc[field] = record.getString(fieldDefinition.schema);
+                    break;
+                case 'xsd:integer':
+                    acc[field] = record.getInteger(fieldDefinition.schema);
+                    break;
+                default:
+                    console.log('Unknown type');
+                    break;
+            }
+            return acc;
+        }, { id: record.asRef() });
+};
+
+const updateTripleDocFromRecord = resource => (subject, record) => {
+    const definition = resourceDefinitions[resource];
+
+    Object.keys(definition.fields).forEach(field => {
+            const fieldDefinition = definition.fields[field];
+            switch(fieldDefinition.type) {
+                case 'xsd:string':
+                    subject.setString(fieldDefinition.schema, record[field]);
+                    break;
+                case 'xsd:integer':
+                    subject.setInteger(fieldDefinition.schema, record[field]);
+                    break;
+                default:
+                    console.log('Unknown type');
+                    break;
+        }
     });
 }
 

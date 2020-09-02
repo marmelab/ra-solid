@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { List, Datagrid, TextField, Filter, SearchInput, TextInput, NumberField, NumberInput } from 'react-admin';
+import { List, Datagrid, TextField, Filter, SearchInput, TextInput, NumberField, NumberInput, EditButton } from 'react-admin';
 
 const ProductFilter = props => (
     <Filter {...props}>
@@ -17,6 +17,7 @@ export function ProductList(props) {
                 <TextField source="name" />
                 <NumberField source="width" />
                 <NumberField source="height" />
+                <EditButton />
             </Datagrid>
         </List>
     )
